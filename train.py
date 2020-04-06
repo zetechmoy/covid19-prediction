@@ -1,7 +1,7 @@
 
 from helper import *
 import numpy as np
-import random
+import random, os
 from datetime import datetime
 
 from sklearn.preprocessing import MinMaxScaler
@@ -37,44 +37,44 @@ def main():
 	context_x, values = np.asarray(context_x), np.asarray(values)
 
 	#extract x and y from values
-	values_x = values[:,:,0:-1]#2d to 3d values
+	values_x = values[:,:,0:-1]
 	values_y = values[:,:,-1].reshape((1, -1))[0]
 
 	cut_index = int(values_x.shape[0]*training_part)
 
-	print("context_x", context_x.shape)
+	print("context_x", context_x.shape, context_x[0])
 	print("values_x", values_x.shape, values_x[0])
 	print("values_y", values_y.shape, values_y[0])
 
-	#print(values_x_test)
 	#now data are ready !
 
 	############################################################################
 	#Define the model
-	model = get_model_2(context_vec_size, data_vec_size)
+	model = get_model(context_vec_size, data_vec_size)
 
 	#pretty print on tensorboard (, callbacks=[tensorboard_callback])
 	#logdir = "logs/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 	#tensorboard_callback = TensorBoard(log_dir=logdir)
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
-	for _ in range(0, 10):
-		model.fit(values_x, values_y, batch_size=256, epochs=10, validation_split=training_part)
+	for _ in range(0, 6):
+		model.fit([values_x, context_x], values_y, batch_size=256, epochs=1, validation_split=training_part)
+		test_sample_context_x = context_x[0:3]
 		test_sample_x = values_x[0:3]
 		test_sample_y = values_y[0:3]
-		predictions = model.predict(test_sample_x)
-
+		predictions = model.predict([test_sample_x, context_x])
 		#predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
 		#test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y, np.zeros((test_sample_y.shape[0], data_vec_size)))))[:,0]
 
 		for i in range(0, test_sample_x.shape[0]):
 			#print(scaler.inverse_transform(test_sample[i]), "=>", predictions[i])
-			print(test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+			print(test_sample_context_x[i].tolist(), test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]
 			#print(test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
 
 	modeldir = "models/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 	# Save the model
+	os.mkdir(modeldir)
 	model.save(modeldir+"/"+data_type+"_model.h5")
 
 if __name__ == '__main__':

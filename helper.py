@@ -89,24 +89,40 @@ def mish(x):
 def get_model(context_vec_size, values_vec_size):
 
 	context_input = Input(shape=(context_vec_size,))
-	values_input = Input(shape=(values_vec_size, 1,))
+	values_input = Input(shape=(1, values_vec_size))
 
-	#feature
-	values = LSTM(10)(values_input)
+	#feature , return_sequences=True
+	#values = LSTM(80, activation='relu')(values_input)
+	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu", return_sequences=True)(values)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu", return_sequences=True)(values)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu")(values)
+	values = Dropout(0.1)(values)
 
 	#merge
 	merge = concatenate([values, context_input])
 
 	#output
-	output = Dense(32, activation="relu")(merge)
-	output = Dense(16, activation="relu")(output)
-	output = Dense(1, activation='relu')(output)
+	#output = Dense(256, activation=mish)(values)
+	#output = Dense(128, activation=mish)(output)
+	#output = Dense(64, activation=mish)(output)
+	#output = Dense(32, activation=mish)(output)
+	output = Dense(16, activation="relu")(merge)
+	output = Dropout(0.1)(output)
+	#output = Dense(8, activation=mish)(output)
+	output = Dense(8, activation="relu")(output)
+	output = Dropout(0.1)(output)
+	#output = Dense(2, activation=mish)(output)
+	output = Dense(1, activation="relu")(output)
 
-	model = Model(inputs=[context_input, values_input], outputs=output)
+	model = Model(inputs=[values_input, context_input], outputs=output)
 
-	opt = Adam(lr=0.1, epsilon=1e-08, decay=0.0)
+	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
+	model.compile(optimizer=opt, loss='mse')
 
-	model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 	# summarize layers
 	print(model.summary())
 	# plot graph
