@@ -18,8 +18,42 @@ def get_data(csv_path):
 	return preprocessed data
 	"""
 	#data = np.genfromtxt(csv_path, delimiter=',')
+	#dfa['A'] = list(range(len(dfa.index)))
+
+	#Province/State Country/Region
 	df = pd.read_csv(csv_path, sep=',')
 	df = df.replace(np.nan, '', regex=True)
+
+	populations = []
+
+	#country admin_name lat lng population
+	df_wc = pd.read_csv("data/worldcities.csv", sep=',')
+	df_wc = df_wc.replace(np.nan, 0, regex=True)
+
+	df_countries = pd.read_csv("data/countries-pop.csv", sep='\t')
+
+	for i in range(0, len(df.iloc[:])):
+		state = df.loc[i]["Province/State"]
+		country = df.loc[i]["Country/Region"]
+
+		#pops_country = df_countries["Country/Region" == country]
+		#print(pops_country)
+		if state != '':
+			query = df_wc.query('country == "'+country+'" & admin_name == "'+state+'"')
+			pop_size = query["population"].tolist()
+			pop_size = pop_size[0] if len(pop_size) > 0 else 0
+		else:
+			query = df_wc.query('country == "'+country+'"')
+			pop_size = query["population"].tolist()
+			pop_size = pop_size[0] if len(pop_size) > 0 else 0
+
+		if pop_size == 0:
+			query = df_countries.query('country == "'+country+'"')
+			pop_size = sum(query["pop_size"].tolist())
+
+		populations.append(pop_size)
+
+	df["Population"] = populations
 
 	############################################################################
 	#start by removing states and countries from data
@@ -34,7 +68,7 @@ def process_data_values(scaler, data_df, data_vec_size):
 
 	context_x = list()
 	values_x = list()
-
+	population_x = list()
 	#add one to data_vec_size because last one will be the y
 	data_vec_size = data_vec_size + 1
 
@@ -43,13 +77,14 @@ def process_data_values(scaler, data_df, data_vec_size):
 		row = data[i]
 
 		latlng = row[0:2]
-		values = row[2:-1]
+		values = row[2:-2]
+		population = row[-1]
 
 		for j in range(0, values.shape[0]-data_vec_size):
 			context_x.append(latlng)
-			v = np.asarray([values[j:j+data_vec_size]])
-			scaler.partial_fit(v)
+			v = np.asarray([values[j:j+data_vec_size]])/population
 			values_x.append(v)
+			population_x.append(population)
 
 	#for i in range(0, len(values_x)):
 	#	values_x[i] = scaler.transform(values_x[i])
@@ -61,10 +96,10 @@ def process_data_values(scaler, data_df, data_vec_size):
 	added_zeros = 0
 	max_zeros = int((values_x.shape[0]-idx_of_zeros.shape[0])*0.25)
 
-	values_x = np.delete(values_x, idx_of_zeros[max_zeros:], axis=0)
-	context_x = np.delete(context_x, idx_of_zeros[max_zeros:], axis=0)
+	values_x = np.delete(values_x, idx_of_zeros[max_zeros:], axis=0).tolist()
+	context_x = np.delete(context_x, idx_of_zeros[max_zeros:], axis=0).tolist()
 
-	return context_x, values_x
+	return context_x, values_x, population_x
 
 def get_location_latlng_switcher(csv_path):
 	"""
@@ -95,7 +130,13 @@ def get_model(context_vec_size, values_vec_size):
 	#values = LSTM(80, activation='relu')(values_input)
 	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
-	values = GRU(1024, activation="relu")(values)
+	values = GRU(1024, activation="relu", return_sequences=True)(values)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu", return_sequences=True)(values)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu", return_sequences=True)(values)
+	values = Dropout(0.1)(values)
+	values = GRU(1024, activation="relu")(values_input)
 	values = Dropout(0.1)(values)
 
 	#merge
@@ -110,12 +151,12 @@ def get_model(context_vec_size, values_vec_size):
 	#output = Dense(8, activation=mish)(output)
 	output = Dense(8, activation="relu")(output)
 	#output = Dense(2, activation=mish)(output)
-	output = Dense(1, activation="relu")(output)
+	output = Dense(1, activation="sigmoid")(output)
 
 	model = Model(inputs=[values_input, context_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mean_absolute_error', metrics=['acc'])
+	model.compile(optimizer=opt, loss='mean_squared_error')
 
 	# summarize layers
 	print(model.summary())

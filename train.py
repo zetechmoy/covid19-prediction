@@ -24,17 +24,21 @@ def main():
 	scaler = MinMaxScaler(feature_range=(0, 1))
 
 	#process data
-	context_x, values = process_data_values(scaler, data, data_vec_size)
+	context_x, values, population_x = process_data_values(scaler, data, data_vec_size)
 
 	print("context_x", len(context_x))
 	print("values", len(values))
 	context_vec_size = len(context_x[0])
 
 	#shuffle and cut data
-	shuf = list(zip(context_x, values))
-	random.shuffle(shuf)
-	context_x, values = zip(*shuf)
-	context_x, values = np.asarray(context_x), np.asarray(values)
+	seed = random.random()
+	random.seed(seed)
+	random.shuffle(context_x)
+	random.seed(seed)
+	random.shuffle(values)
+	random.seed(seed)
+	random.shuffle(population_x)
+	context_x, values, population_x = np.asarray(context_x), np.asarray(values), np.asarray(population_x)
 
 	#extract x and y from values
 	values_x = values[:,:,0:-1]
@@ -45,6 +49,7 @@ def main():
 	print("context_x", context_x.shape, context_x[0])
 	print("values_x", values_x.shape, values_x[0])
 	print("values_y", values_y.shape, values_y[0])
+	print("population_x", population_x.shape, population_x[0])
 
 	#now data are ready !
 
@@ -58,17 +63,19 @@ def main():
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
 	for _ in range(0, 10):
-		model.fit([values_x, context_x], values_y, batch_size=256, epochs=5, validation_split=training_part)
+		model.fit([values_x, context_x], values_y, batch_size=1024, epochs=20, validation_split=training_part)
 		test_sample_context_x = context_x[0:3]
 		test_sample_x = values_x[0:3]
 		test_sample_y = values_y[0:3]
+		test_population_x = population_x[0:3]
 		predictions = model.predict([test_sample_x, context_x])
 		#predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
 		#test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y, np.zeros((test_sample_y.shape[0], data_vec_size)))))[:,0]
 
 		for i in range(0, test_sample_x.shape[0]):
 			#print(scaler.inverse_transform(test_sample[i]), "=>", predictions[i])
-			print(test_sample_context_x[i].tolist(), test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+			#print(test_sample_context_x[i].tolist(), test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+			print(test_sample_context_x[i].tolist(), np.asarray(test_sample_x[i].tolist()[0])*test_population_x[i], "=>", np.asarray(predictions[i].tolist()[0])*test_population_x[i], "/", np.asarray(test_sample_y[i])*test_population_x[i])
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]
 			#print(test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
 
@@ -78,4 +85,5 @@ def main():
 	model.save(modeldir+"/"+data_type+"_model.h5")
 
 if __name__ == '__main__':
+	print("/!\ As the population size is way bigger than people we are considering, the model doesn't succeed to adjust properly")
 	main()
