@@ -95,10 +95,6 @@ def get_model(context_vec_size, values_vec_size):
 	#values = LSTM(80, activation='relu')(values_input)
 	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
-	values = GRU(1024, activation="relu", return_sequences=True)(values)
-	values = Dropout(0.1)(values)
-	values = GRU(1024, activation="relu", return_sequences=True)(values)
-	values = Dropout(0.1)(values)
 	values = GRU(1024, activation="relu")(values)
 	values = Dropout(0.1)(values)
 
@@ -111,17 +107,15 @@ def get_model(context_vec_size, values_vec_size):
 	#output = Dense(64, activation=mish)(output)
 	#output = Dense(32, activation=mish)(output)
 	output = Dense(16, activation="relu")(merge)
-	output = Dropout(0.1)(output)
 	#output = Dense(8, activation=mish)(output)
 	output = Dense(8, activation="relu")(output)
-	output = Dropout(0.1)(output)
 	#output = Dense(2, activation=mish)(output)
 	output = Dense(1, activation="relu")(output)
 
 	model = Model(inputs=[values_input, context_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mse')
+	model.compile(optimizer=opt, loss='mean_absolute_error', metrics=['acc'])
 
 	# summarize layers
 	print(model.summary())
