@@ -73,7 +73,9 @@ def main():
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]
 			#print(test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
 
-
+	modeldir = "models/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+	# Save the model
+	model.save(modeldir+"/"+data_type+"_model.h5")
 
 if __name__ == '__main__':
 	main()
