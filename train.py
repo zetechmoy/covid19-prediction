@@ -24,17 +24,23 @@ def main():
 	scaler = MinMaxScaler(feature_range=(0, 1000))
 
 	#process data
-	context_x, values = process_data_values(scaler, data, data_vec_size)
+	context_x, duration_x, values = process_data_values(scaler, data, data_vec_size)
 
 	print("context_x", len(context_x))
+	print("duration_x", len(duration_x))
 	print("values", len(values))
 	context_vec_size = len(context_x[0])
 
 	#shuffle and cut data
-	shuf = list(zip(context_x, values))
-	random.shuffle(shuf)
-	context_x, values = zip(*shuf)
-	context_x, values = np.asarray(context_x), np.asarray(values)
+	s = random.randint(0, 15)
+	random.seed(s)
+	random.shuffle(context_x)
+	random.seed(s)
+	random.shuffle(duration_x)
+	random.seed(s)
+	random.shuffle(values)
+
+	context_x, duration_x, values = np.asarray(context_x), np.asarray(duration_x), np.asarray(values)
 
 	#extract x and y from values
 	values_x = values[:,:,0:-1]
@@ -43,6 +49,7 @@ def main():
 	cut_index = int(values_x.shape[0]*training_part)
 
 	print("context_x", context_x.shape, context_x[0])
+	print("duration_x", duration_x.shape, duration_x[0])
 	print("values_x", values_x.shape, values_x[0])
 	print("values_y", values_y.shape, values_y[0])
 
@@ -58,19 +65,20 @@ def main():
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
 	for _ in range(0, 10):
-		model.fit([values_x, context_x], values_y, batch_size=256, epochs=5, validation_split=training_part)
+		model.fit([values_x, context_x, duration_x], values_y, batch_size=64, epochs=10, validation_split=training_part)
+		test_sample_duration_x = duration_x[0:3]
 		test_sample_context_x = context_x[0:3]
 		test_sample_x = values_x[0:3]
 		test_sample_y = values_y[0:3]
-		predictions = model.predict([test_sample_x, context_x])
+		predictions = model.predict([test_sample_x, test_sample_context_x, test_sample_duration_x])
 
 		#inverse transform
-		predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
-		test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y.reshape((-1, 1)), np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
+		#predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
+		#test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y.reshape((-1, 1)), np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
 
 		for i in range(0, test_sample_x.shape[0]):
 			#data without inverse_transform
-			print(test_sample_context_x[i].tolist(), test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+			print(test_sample_context_x[i].tolist(), test_sample_duration_x[i], test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
 
 			#inverse_transformed data
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]

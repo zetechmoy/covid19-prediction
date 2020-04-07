@@ -34,6 +34,7 @@ def process_data_values(scaler, data_df, data_vec_size):
 
 	context_x = list()
 	values_x = list()
+	duration_x = list()
 
 	#add one to data_vec_size because last one will be the y
 	data_vec_size = data_vec_size + 1
@@ -50,12 +51,15 @@ def process_data_values(scaler, data_df, data_vec_size):
 			v = np.asarray([values[j:j+data_vec_size]])
 			scaler.partial_fit(v)
 			values_x.append(v)
+			#we can't predict next values if there is less than 3 days
+			duration_x.append(j+data_vec_size)
 
 	#transform data using scaler
 	#for i in range(0, len(values_x)):
 	#	values_x[i] = scaler.transform(values_x[i])
 
 	values_x = np.asarray(values_x)
+	duration_x = np.asarray(duration_x)
 
 	#we have too much zeros so we delete a part of them
 	idx_of_zeros = np.asarray([i for i in range(0, values_x.shape[0]) if (values_x[i] == [0.0]*data_vec_size).all()])
@@ -64,8 +68,9 @@ def process_data_values(scaler, data_df, data_vec_size):
 
 	values_x = np.delete(values_x, idx_of_zeros[max_zeros:], axis=0)
 	context_x = np.delete(context_x, idx_of_zeros[max_zeros:], axis=0)
+	duration_x = np.delete(duration_x, idx_of_zeros[max_zeros:], axis=0)
 
-	return context_x, values_x
+	return context_x.tolist(), duration_x.tolist(), values_x.tolist()
 
 def get_location_latlng_switcher(csv_path):
 	"""
@@ -90,30 +95,33 @@ def mish(x):
 def get_model(context_vec_size, values_vec_size):
 
 	context_input = Input(shape=(context_vec_size,))
+	duration_input = Input(shape=(1,))
 	values_input = Input(shape=(1, values_vec_size))
 
 	#feature , return_sequences=True
 	#values = LSTM(80, activation='relu')(values_input)
 	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
+	#values = GRU(1024, activation="relu", return_sequences=True)(values)
+	#values = Dropout(0.1)(values)
 	values = GRU(1024, activation="relu")(values)
 	values = Dropout(0.1)(values)
 
 	#merge
-	merge = concatenate([values, context_input])
+	merge = concatenate([values, context_input, duration_input])
 
 	#output
 	#output = Dense(256, activation=mish)(values)
 	#output = Dense(128, activation=mish)(output)
 	#output = Dense(64, activation=mish)(output)
 	#output = Dense(32, activation=mish)(output)
+	#output = Dense(32, activation="relu")(merge)
 	output = Dense(16, activation="relu")(merge)
-	#output = Dense(8, activation=mish)(output)
 	output = Dense(8, activation="relu")(output)
 	#output = Dense(2, activation=mish)(output)
 	output = Dense(1, activation="relu")(output)
 
-	model = Model(inputs=[values_input, context_input], outputs=output)
+	model = Model(inputs=[values_input, context_input, duration_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
 	model.compile(optimizer=opt, loss='mean_absolute_error')
