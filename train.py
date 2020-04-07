@@ -21,7 +21,7 @@ def main():
 	############################################################################
 	#get data and define training and testing data
 	data = get_data(data_path)
-	scaler = MinMaxScaler(feature_range=(0, 1))
+	scaler = MinMaxScaler(feature_range=(0, 1000))
 
 	#process data
 	context_x, values = process_data_values(scaler, data, data_vec_size)
@@ -63,14 +63,18 @@ def main():
 		test_sample_x = values_x[0:3]
 		test_sample_y = values_y[0:3]
 		predictions = model.predict([test_sample_x, context_x])
-		#predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
-		#test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y, np.zeros((test_sample_y.shape[0], data_vec_size)))))[:,0]
+
+		#inverse transform
+		predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
+		test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y.reshape((-1, 1)), np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
 
 		for i in range(0, test_sample_x.shape[0]):
-			#print(scaler.inverse_transform(test_sample[i]), "=>", predictions[i])
+			#data without inverse_transform
 			print(test_sample_context_x[i].tolist(), test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+
+			#inverse_transformed data
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]
-			#print(test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
+			#print(test_sample_context_x[i].tolist(), test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
 
 	modeldir = "models/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 	# Save the model

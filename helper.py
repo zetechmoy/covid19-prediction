@@ -51,6 +51,7 @@ def process_data_values(scaler, data_df, data_vec_size):
 			scaler.partial_fit(v)
 			values_x.append(v)
 
+	#transform data using scaler
 	#for i in range(0, len(values_x)):
 	#	values_x[i] = scaler.transform(values_x[i])
 
@@ -115,8 +116,8 @@ def get_model(context_vec_size, values_vec_size):
 	model = Model(inputs=[values_input, context_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mean_absolute_error', metrics=['acc'])
-
+	model.compile(optimizer=opt, loss='mean_absolute_error')
+	#mean_absolute_error, mean_squared_error
 	# summarize layers
 	print(model.summary())
 	# plot graph
