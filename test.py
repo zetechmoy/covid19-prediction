@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data_type = "confirmed"
-model_path = "models/20200407-225637/"+data_type+"_model.h5"
+model_path = "models/20200408-130252/"+data_type+"_model.h5"
 
 #china [27.3338, 128.5697],[56.0, 90.0, 114.0] => 146.55475
 #suisse [46.8182, 8.2275],[56.0, 90.0, 114.0] => 146.9167
@@ -48,7 +48,8 @@ model = keras.models.load_model(model_path)
 
 true_ys = [12,12,12,12,12,12,12,12,12,12,14,18,38,57,100,130,191,204,285,377,653,949,1126,1209,1784,2281,2281,3661,4469,4499,6633,7652,9043,10871,12612,14282,16018,19856,22304,25233,29155,32964,37575,40174,44550,52128,56989,59105,64338,89953]
 
-start_x = [12, 12, 12]
+start_amount = 12
+start_x = [0, 0, 0]
 start_date = 1580515200
 start_duration = 24
 
@@ -62,10 +63,13 @@ for i in range(0, len(true_ys)):
 	input = [[[last_evolution]], [latlng], [start_duration]]
 
 	prediction = model.predict(input)[0][0]
-	next_last_evolution = np.hstack((last_evolution[1:], [prediction]))
+	next_last_evolution = np.hstack((last_evolution[1:], [prediction-last_evolution[-1]]))
 	last_evolution = next_last_evolution
-
-	ys.append(prediction)
+	print(prediction)
+	if len(ys) > 0:
+		ys.append(ys[len(ys)-1]+start_amount+prediction)
+	else:
+		ys.append(start_amount+prediction)
 	xs.append(start_date)
 
 	start_date += 86400
@@ -80,3 +84,5 @@ plt.show()
 
 #on se rend compte que lorsqu'il s'agit de prédire la valeur suivante il n'y a
 #pas de problème mais à long terme les valeurs sont trop fausses (en faisant l'évolution)
+
+#c'est pas mieux en agissant sur l'évolution par les différences

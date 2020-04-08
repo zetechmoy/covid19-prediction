@@ -46,9 +46,12 @@ def process_data_values(scaler, data_df, data_vec_size):
 		latlng = row[0:2]
 		values = row[2:-1]
 
-		for j in range(0, values.shape[0]-data_vec_size):
+		for j in range(0, values.shape[0]-data_vec_size-1):
 			context_x.append(latlng)
-			v = np.asarray([values[j:j+data_vec_size]])
+			v = np.asarray(values[j:j+data_vec_size+1])
+			vec = [v[k+1]-v[k] for k in range(0, v.shape[0]-1)]
+
+			v = np.asarray([vec])
 			scaler.partial_fit(v)
 			values_x.append(v)
 			#we can't predict next values if there is less than 3 days
@@ -100,11 +103,11 @@ def get_model(context_vec_size, values_vec_size):
 
 	#feature , return_sequences=True
 	#values = LSTM(80, activation='relu')(values_input)
-	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
+	values = GRU(1024, activation="linear", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
 	#values = GRU(1024, activation="relu", return_sequences=True)(values)
 	#values = Dropout(0.1)(values)
-	values = GRU(1024, activation="relu")(values)
+	values = GRU(1024, activation="linear")(values)
 	values = Dropout(0.1)(values)
 
 	#merge
@@ -116,15 +119,15 @@ def get_model(context_vec_size, values_vec_size):
 	#output = Dense(64, activation=mish)(output)
 	#output = Dense(32, activation=mish)(output)
 	#output = Dense(32, activation="relu")(merge)
-	output = Dense(16, activation="relu")(merge)
-	output = Dense(8, activation="relu")(output)
+	output = Dense(16, activation="linear")(merge)
+	output = Dense(8, activation="linear")(output)
 	#output = Dense(2, activation=mish)(output)
-	output = Dense(1, activation="relu")(output)
+	output = Dense(1, activation="linear")(output)
 
 	model = Model(inputs=[values_input, context_input, duration_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mean_absolute_error')
+	model.compile(optimizer=opt, loss='mean_squared_error')
 	#mean_absolute_error, mean_squared_error
 	# summarize layers
 	print(model.summary())

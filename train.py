@@ -21,7 +21,7 @@ def main():
 	############################################################################
 	#get data and define training and testing data
 	data = get_data(data_path)
-	scaler = MinMaxScaler(feature_range=(0, 1000))
+	scaler = MinMaxScaler(feature_range=(-1, 1))
 
 	#process data
 	context_x, duration_x, values = process_data_values(scaler, data, data_vec_size)
@@ -64,7 +64,7 @@ def main():
 	#tensorboard_callback = TensorBoard(log_dir=logdir)
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
-	for _ in range(0, 10):
+	for _ in range(0, 3):
 		model.fit([values_x, context_x, duration_x], values_y, batch_size=64, epochs=10, validation_split=training_part)
 		test_sample_duration_x = duration_x[0:3]
 		test_sample_context_x = context_x[0:3]
