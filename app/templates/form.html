@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="modal fade" id="model-result">
+	<div class="modal-dialog">
+		<div class="modal-content">
+
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<h4 class="modal-title">Result</h4>
+			</div>
+
+			<!-- Modal body -->
+			<div class="modal-body">
+				<span id="spinner" style="display: none;">
+					<div class="spinner-border" role="status">
+						<span class="sr-only">Loading...</span>
+					</div>
+					Please wait, this could take a while ...
+				</span>
+
+				<div id="result-container" style="display: none;">
+					There will be approximately : <b id="result"></b> tomorrow.
+				</div>
+			</div>
+
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<button type="button" class="btn btn-info" data-dismiss="modal" id="close-btn">Ok, thank you !</button>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<div class="row no-padding no-margin" style="height: 100%;">
+	<div class="col-8 no-padding">
+		<div id="map"></div>
+	</div>
+
+	<div class="col-4 no-padding">
+		<!-- Default form register -->
+		<form id="predict-form" class="text-center border border-light p-2 no-margin">
+
+			<p class="h4 mb-4">Covid19-Prediction</p>
+
+			<div style="text-align: left;">
+				<label>Location</label>
+				<div class="form-row mb-4">
+					<div class="col">
+						<input type="text" id="lat" class="form-control" placeholder="Latitude" required>
+					</div>
+					<div class="col">
+						<input type="text" id="lng" class="form-control" placeholder="Longitude" required>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group" style="text-align: left;">
+				<label for="type" style="text-align: left;">Type of prediction</label>
+				<select class="form-control" id="type">
+					<option selected value="confirmed">Confirmed</option>
+					<option value="deaths">Deaths</option>
+					<option value="recovered">Recovered</option>
+				</select>
+			</div>
+
+
+			<div style="text-align: left;">
+				<label>Last values</label>
+				<div class="form-row mb-4">
+					<div class="col">
+						<input type="number" id="last-1" class="form-control" placeholder="D-2" required>
+					</div>
+					<div class="col">
+						<input type="number" id="last-2" class="form-control" placeholder="D-1 (Yesterday)" required>
+					</div>
+					<div class="col">
+						<input type="number" id="last-3" class="form-control" placeholder="D (Today)" required>
+					</div>
+				</div>
+			</div>
+
+			<!-- Sign up button -->
+			<button class="btn btn-info my-4 btn-block" type="submit">Predict D+1</button>
+
+		</form>
+		<button class="btn btn-block" type="submit" onclick="changeZoom()">Reset Map Zoom</button>
+		<hr>
+		<div class="row no-padding no-margin">
+			<div class="col-12">
+				<h5><b>What does it do ?</b></h5>
+				<p class="no-margin">This tool predict values of new confirmed/deaths/recovered cases of coronavirus for the next days.</p>
+				<p>This tool is based on AI using Keras</p>
+
+				<h5><b>How to use</b></h5>
+				<p class="no-margin"><b>Step 1 :</b> Select location by clicking on the map</p>
+				<p class="no-margin"><b>Step 2 :</b> Select prediction type Confirmed/Deaths/Recovered</p>
+				<p class="no-margin"><b>Step 3 :</b> Enter last days values (visit : <a target="_blank" href="https://www.worldometers.info/coronavirus/">Worldometers/Coronavirus</a>)</p>
+				<p><b>Step 4 :</b> Press "Predict D+1"</p>
+
+				<p style="color: grey">Created by Théo Guidoux <a href="https://twitter.com/TGuidoux">@TGuidoux</a>, available on <a href="https://github.com/zetechmoy/covid19-prediction">GitHub</a></p>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	// CONFIGURATION DE LA CARTE //
+	var map = L.map('map').setView([0, 0], 2);
+
+	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+	}).addTo(map);
+
+	// ACTIONS SUR LA CARTE
+
+	function changeZoom() {
+		map.setZoom(2);
+		map.setView([0, 0]);
+	}
+
+	var marker;
+	map.on('click', function(event){
+
+		if (marker == undefined) {
+
+			marker = L.marker(event.latlng)
+			marker.addTo(map);
+			marker.bindPopup("Lat: "+event.latlng.lat.toString()+" Lng: "+event.latlng.lng.toString()).openPopup();
+		}
+
+		else {
+			map.removeLayer(marker)
+			marker = L.marker(event.latlng)
+			marker.addTo(map);
+			marker.bindPopup("Lat: "+event.latlng.lat.toString()+" Lng: "+event.latlng.lng.toString()).openPopup();
+		}
+
+		$("#lat").val(event.latlng.lat);
+		$("#lng").val(event.latlng.lng);
+
+	});
+
+	$("#predict-form").on('submit', function(event) {
+		var form = $("#predict-form");
+		form.validate();
+		if (form.valid() === false) {
+			event.preventDefault();
+			event.stopPropagation();
+		}else{
+			var lat = $("#lat").val();
+			var lng = $("#lng").val();
+
+			var last1 = $("#last-1").val()
+			var last2 = $("#last-2").val()
+			var last3 = $("#last-3").val()
+
+			var datatype = $("#type").val();
+
+			//console.log(lat+" "+lng);
+			//console.log(last1+" "+last2+" "+last3);
+			//console.log(datatype);
+
+			var data = {"lat": lat, "lng": lng, "last1":last1, "last2":last2, "last3":last3, "datatype": datatype};
+
+			$('#model-result').modal("show");
+			$("#spinner").show();
+			$("#result-container").hide();
+			$("#close-btn").prop("disabled", true);
+
+			$.ajax({
+				url : 'http://127.0.0.1:5000/predict',
+				type : 'POST',
+				dataType: 'json',
+				crossdomain: true,
+				data : data,
+				xhrFields: { withCredentials: true },
+				complete: function (response) {
+					var res = response.responseJSON;
+					$("#result").html(res.prediction);
+
+					$("#spinner").hide();
+					$("#result-container").show();
+					$("#close-btn").prop("disabled", false);
+				}
+			});
+		}
+
+
+	});
+
+</script>
+
+{% endblock %}
