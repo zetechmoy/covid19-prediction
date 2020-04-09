@@ -7,7 +7,7 @@ from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
 
 #define which data we are working on : confirmed, deaths or recovered
-data_type = "confirmed"
+data_type = "recovered"
 data_path = "data/time_series_covid19_"+data_type+"_global.csv"
 
 #data vec size represent from how many days we are trying to predict the next day
@@ -65,7 +65,7 @@ def main():
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
 	for _ in range(0, 10):
-		model.fit([values_x, context_x, duration_x], values_y, batch_size=64, epochs=10, validation_split=training_part)
+		model.fit([values_x, context_x, duration_x], values_y, batch_size=64, epochs=20, validation_split=training_part)
 		test_sample_duration_x = duration_x[0:3]
 		test_sample_context_x = context_x[0:3]
 		test_sample_x = values_x[0:3]

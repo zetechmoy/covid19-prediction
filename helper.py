@@ -8,7 +8,7 @@ from keras.layers import concatenate
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard
 
-from keras_radam import RAdam
+#from keras_radam import RAdam
 import keras.backend as K
 
 from keras.regularizers import l1, l2, l1_l2
