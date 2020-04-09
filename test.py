@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data_type = "confirmed"
-model_path = "models/20200407-225637/"+data_type+"_model.h5"
+model_path = "models/20200407/"+data_type+"_model.h5"
 
 #china [27.3338, 128.5697],[56.0, 90.0, 114.0] => 146.55475
 #suisse [46.8182, 8.2275],[56.0, 90.0, 114.0] => 146.9167
@@ -18,12 +18,18 @@ latlng = np.asarray([46.131357,-2.4364346])
 duration = 15
 
 # Recreate the exact same model purely from the file
-model = keras.models.load_model(model_path)
+model1 = keras.models.load_model("models/20200409/"+"confirmed"+"_model.h5")
+model2 = keras.models.load_model("models/20200409/"+"deaths"+"_model.h5")
+model3 = keras.models.load_model("models/20200409/"+"recovered"+"_model.h5")
 
-#input = [[[all_values]], [latlng], [duration]]
-#prediction = model.predict(input)[0][0]
+input = [[[all_values]], [latlng], [duration]]
+prediction1 = model1.predict(input)[0][0]
+prediction2 = model2.predict(input)[0][0]
+prediction3 = model3.predict(input)[0][0]
 #
-#print(input, "=>", prediction)
+print(input, "=>", prediction1)
+print(input, "=>", prediction2)
+print(input, "=>", prediction3)
 
 #check whether location as a real influence (just a bit)
 #for i in range(0, 180, 1):

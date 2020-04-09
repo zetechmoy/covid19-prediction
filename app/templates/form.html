@@ -41,7 +41,7 @@
 
 	<div class="col-4 no-padding">
 		<!-- Default form register -->
-		<form id="predict-form" class="text-center border border-light p-2 no-margin">
+		<form id="predict-form" class="text-center border border-light p-2 no-margin" href="#!">
 
 			<p class="h4 mb-4">Covid19-Prediction</p>
 
@@ -145,12 +145,13 @@
 	});
 
 	$("#predict-form").on('submit', function(event) {
+		console.log("form submit");
 		var form = $("#predict-form");
 		form.validate();
-		if (form.valid() === false) {
-			event.preventDefault();
-			event.stopPropagation();
-		}else{
+		event.preventDefault();
+		event.stopPropagation();
+		if (form.valid() === true) {
+
 			var lat = $("#lat").val();
 			var lng = $("#lng").val();
 
