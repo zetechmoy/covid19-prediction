@@ -98,34 +98,25 @@ def get_model(context_vec_size, values_vec_size):
 	duration_input = Input(shape=(1,))
 	values_input = Input(shape=(1, values_vec_size))
 
-	#feature , return_sequences=True
-	#values = LSTM(80, activation='relu')(values_input)
-	values = GRU(1024, activation="relu", return_sequences=True)(values_input)
+	#feature (sequences layers), return_sequences=True
+	values = GRU(512, activation="relu", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
-	#values = GRU(1024, activation="relu", return_sequences=True)(values)
-	#values = Dropout(0.1)(values)
-	values = GRU(1024, activation="relu")(values)
+	values = GRU(512, activation="relu")(values)
 	values = Dropout(0.1)(values)
 
 	#merge
 	merge = concatenate([values, context_input, duration_input])
 
-	#output
-	#output = Dense(256, activation=mish)(values)
-	#output = Dense(128, activation=mish)(output)
-	#output = Dense(64, activation=mish)(output)
-	#output = Dense(32, activation=mish)(output)
-	#output = Dense(32, activation="relu")(merge)
+	#output (interpretation layers)
 	output = Dense(16, activation="relu")(merge)
 	output = Dense(8, activation="relu")(output)
-	#output = Dense(2, activation=mish)(output)
 	output = Dense(1, activation="relu")(output)
 
 	model = Model(inputs=[values_input, context_input, duration_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
 	model.compile(optimizer=opt, loss='mean_absolute_error')
-	#mean_absolute_error, mean_squared_error
+
 	# summarize layers
 	print(model.summary())
 	# plot graph
