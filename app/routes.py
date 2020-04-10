@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, Response
-from flask_wtf import FlaskForm
 import json, keras
 import numpy as np
 from keras import backend as K
