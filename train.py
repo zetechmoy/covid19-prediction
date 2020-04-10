@@ -1,7 +1,7 @@
 
 from helper import *
 import numpy as np
-import random, os
+import random, os, argparse
 from datetime import datetime
 
 from sklearn.preprocessing import MinMaxScaler
@@ -90,4 +90,11 @@ def main():
 	model.save(modeldir+"/"+data_type+"_model.h5")
 
 if __name__ == '__main__':
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-dt", "--datatype", choices=['confirmed', 'deaths', 'recovered'], help="Type of data to train on", type=str, default="")
+	args = parser.parse_args()
+
+	data_type = args.datatype
+
 	main()
