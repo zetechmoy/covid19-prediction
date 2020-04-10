@@ -1,10 +1,10 @@
 # Covid19-Prediction
 
-Covid19-Prediction is a simple web app which predict the next covid19 evolution in function of location and last evolution.
+Covid19-Prediction is a simple web app which predict the next covid19 evolution in function of location and last evolution. This is a project based on AI using Keras and served by Flask.
 
->Those prediction are for science purposes.
+>Prediction are for science purposes only.
 
-![GitHub Logo](https://i.imgur.com/IRkmQdx.png)
+![Example Of Website](https://i.imgur.com/IRkmQdx.png)
 
 ## Installation
 
@@ -19,8 +19,8 @@ pip3 install -r reqs.txt
 ```bash
 python3 run.py
 ```
-- Open your browser on [https://127.0.0.1:5000](https://127.0.0.1:5000)
-- Then follow insctructions on the website
+- Open your browser on [http://127.0.0.1:5000](http://127.0.0.1:5000)
+- Then follow instructions on the website
 
 ## Train
 This app come with 3 trained models. They have been trained on 09/04/2020.
