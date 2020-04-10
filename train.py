@@ -4,7 +4,7 @@ import numpy as np
 import random, os, argparse
 from datetime import datetime
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 #define which data we are working on : confirmed, deaths or recovered
 data_type = "recovered"
@@ -21,10 +21,10 @@ def main():
 	############################################################################
 	#get data and define training and testing data
 	data = get_data(data_path)
-	scaler = MinMaxScaler(feature_range=(0, 1000))
-
+	#scaler = MinMaxScaler(feature_range=(0, 1))
+	scaler = StandardScaler()
 	#process data
-	context_x, duration_x, values = process_data_values(scaler, data, data_vec_size)
+	context_x, duration_x, values = process_data_values(data, data_vec_size)
 
 	print("context_x", len(context_x))
 	print("duration_x", len(duration_x))
@@ -44,7 +44,11 @@ def main():
 
 	#extract x and y from values
 	values_x = values[:,:,0:-1]
-	values_y = values[:,:,-1].reshape((1, -1))[0]
+	values_y = values[:,:,-1]#.reshape((1, -1))[0]
+
+	scaler.fit(np.vstack((values_y, values_x.reshape((-1, 1)))))
+	values_x = scaler.transform(values_x.reshape((-1, 1))).reshape(values_x.shape)
+	values_y = scaler.transform(values_y).reshape((1, -1))[0]
 
 	cut_index = int(values_x.shape[0]*training_part)
 
@@ -65,24 +69,27 @@ def main():
 
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
 	for _ in range(0, 10):
-		model.fit([values_x, context_x, duration_x], values_y, batch_size=64, epochs=20, validation_split=training_part)
-		test_sample_duration_x = duration_x[0:3]
-		test_sample_context_x = context_x[0:3]
-		test_sample_x = values_x[0:3]
-		test_sample_y = values_y[0:3]
+		#last best good res : batch_size=256, linear, loss: 0.0078
+		model.fit([values_x, context_x, duration_x], values_y, batch_size=256, epochs=100, validation_split=training_part)
+		test_sample_duration_x = duration_x[0:5]
+		test_sample_context_x = context_x[0:5]
+		test_sample_x = values_x[0:5]
+		test_sample_y = values_y[0:5]
 		predictions = model.predict([test_sample_x, test_sample_context_x, test_sample_duration_x])
 
+
 		#inverse transform
-		#predictions_transformed = scaler.inverse_transform(np.hstack((predictions, np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
-		#test_sample_y_transformed = scaler.inverse_transform(np.hstack((test_sample_y.reshape((-1, 1)), np.zeros((predictions.shape[0], data_vec_size)))))[:,0]
+		predictions_itransformed = scaler.inverse_transform(predictions.reshape((-1, 1))).reshape(predictions.shape)
+		test_sample_y_itransformed = scaler.inverse_transform(test_sample_y.reshape((-1, 1))).reshape(test_sample_y.shape)
+		test_sample_x_itransformed = scaler.inverse_transform(test_sample_x.reshape((-1, 1))).reshape(test_sample_x.shape)
 
 		for i in range(0, test_sample_x.shape[0]):
 			#data without inverse_transform
-			print(test_sample_context_x[i].tolist(), test_sample_duration_x[i], test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
+			#print(test_sample_context_x[i].tolist(), test_sample_duration_x[i], test_sample_x[i].tolist()[0], "=>", predictions[i].tolist()[0], "/", test_sample_y[i])
 
 			#inverse_transformed data
 			#test_sample_x_transformed = scaler.inverse_transform(np.hstack((test_sample_x[i], [[0]])))[0][0:-1]
-			#print(test_sample_context_x[i].tolist(), test_sample_x_transformed, "=>", predictions_transformed[i], "/", test_sample_y_transformed[i])
+			print(test_sample_context_x[i].tolist(), test_sample_duration_x[i], test_sample_x_itransformed[i], "=> (", predictions_itransformed[i], "=>", test_sample_y_itransformed[i],  ") / (", predictions[i], ":", test_sample_y[i], ")")
 
 	modeldir = "models/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 	# Save the model

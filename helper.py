@@ -29,7 +29,7 @@ def get_data(csv_path):
 
 	return df
 
-def process_data_values(scaler, data_df, data_vec_size):
+def process_data_values(data_df, data_vec_size):
 	#data values are vecs of size data_vec_size, context are [lat, lng]
 
 	context_x = list()
@@ -49,7 +49,6 @@ def process_data_values(scaler, data_df, data_vec_size):
 		for j in range(0, values.shape[0]-data_vec_size):
 			context_x.append(latlng)
 			v = np.asarray([values[j:j+data_vec_size]])
-			scaler.partial_fit(v)
 			values_x.append(v)
 			#we can't predict next values if there is less than 3 days
 			duration_x.append(j+data_vec_size)
@@ -99,60 +98,23 @@ def get_model(context_vec_size, values_vec_size):
 	values_input = Input(shape=(1, values_vec_size))
 
 	#feature (sequences layers), return_sequences=True
-	values = GRU(512, activation="relu", return_sequences=True)(values_input)
+	values = GRU(512, activation="linear", return_sequences=True)(values_input)
 	values = Dropout(0.1)(values)
-	values = GRU(512, activation="relu")(values)
+	values = GRU(512, activation="linear")(values)
 	values = Dropout(0.1)(values)
 
 	#merge
 	merge = concatenate([values, context_input, duration_input])
 
 	#output (interpretation layers)
-	output = Dense(16, activation="relu")(merge)
-	output = Dense(8, activation="relu")(output)
-	output = Dense(1, activation="relu")(output)
+	output = Dense(16, activation="linear")(merge)
+	output = Dense(8, activation="linear")(output)
+	output = Dense(1, activation="linear")(output)
 
 	model = Model(inputs=[values_input, context_input, duration_input], outputs=output)
 
 	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mean_absolute_error')
-
-	# summarize layers
-	print(model.summary())
-	# plot graph
-	plot_model(model, to_file='model.png')
-
-	return model
-
-def get_model_2(context_vec_size, values_vec_size):
-	values_input = Input(shape=(1, values_vec_size))
-
-	#feature , return_sequences=True
-	#values = LSTM(80, activation='relu')(values_input)
-	values = GRU(1024, activation=mish, return_sequences=True)(values_input)
-	values = Dropout(0.1)(values)
-	values = GRU(1024, activation=mish, return_sequences=True)(values)
-	values = Dropout(0.1)(values)
-	values = GRU(1024, activation=mish, return_sequences=True)(values)
-	values = Dropout(0.1)(values)
-	values = GRU(1024, activation=mish)(values)
-	values = Dropout(0.1)(values)
-
-	#output
-	#output = Dense(256, activation=mish)(values)
-	#output = Dense(128, activation=mish)(output)
-	#output = Dense(64, activation=mish)(output)
-	#output = Dense(32, activation=mish)(output)
-	output = Dense(16, activation=mish)(values)
-	#output = Dense(8, activation=mish)(output)
-	output = Dense(4, activation=mish)(output)
-	#output = Dense(2, activation=mish)(output)
-	output = Dense(1, activation=mish)(output)
-
-	model = Model(inputs=values_input, outputs=output)
-
-	opt = Adam(lr=0.001, epsilon=1e-08, decay=0.1)
-	model.compile(optimizer=opt, loss='mse')
+	model.compile(optimizer=opt, loss='mae')
 
 	# summarize layers
 	print(model.summary())
