@@ -35,11 +35,11 @@
 </div>
 
 <div class="row no-padding no-margin" style="height: 100%;">
-	<div class="col-8 no-padding">
+	<div class="col-6 no-padding">
 		<div id="map"></div>
 	</div>
 
-	<div class="col-4 no-padding">
+	<div class="col-6 no-padding">
 		<!-- Default form register -->
 		<form id="predict-form" class="text-center border border-light p-2 no-margin" href="#!">
 
@@ -60,7 +60,7 @@
 			<div class="form-group" style="text-align: left;">
 				<label for="type" style="text-align: left;">Type of prediction</label>
 				<select class="form-control" id="type">
-					<option selected value="confirmed">Confirmed</option>
+					<option selected value="confirmed">Active cases</option>
 					<option value="deaths">Deaths</option>
 					<option value="recovered">Recovered</option>
 				</select>
@@ -71,19 +71,19 @@
 				<label>Last values</label>
 				<div class="form-row mb-4">
 					<div class="col">
-						<input type="number" id="last-1" class="form-control" placeholder="D-2" required>
+						<input type="number" id="last-1" class="form-control" placeholder="Day before yesterday" required>
 					</div>
 					<div class="col">
-						<input type="number" id="last-2" class="form-control" placeholder="D-1 (Yesterday)" required>
+						<input type="number" id="last-2" class="form-control" placeholder="Yesterday" required>
 					</div>
 					<div class="col">
-						<input type="number" id="last-3" class="form-control" placeholder="D (Today)" required>
+						<input type="number" id="last-3" class="form-control" placeholder="Today" required>
 					</div>
 				</div>
 			</div>
 
 			<!-- Sign up button -->
-			<button class="btn btn-info my-4 btn-block" type="submit">Predict D+1</button>
+			<button class="btn btn-info my-4 btn-block" type="submit">Predict Tomorrow</button>
 
 		</form>
 		<button class="btn btn-block" type="submit" onclick="changeZoom()">Reset Map Zoom</button>
@@ -97,8 +97,8 @@
 				<h5><b>How to use</b></h5>
 				<p class="no-margin"><b>Step 1 :</b> Select location by clicking on the map</p>
 				<p class="no-margin"><b>Step 2 :</b> Select prediction type Confirmed/Deaths/Recovered</p>
-				<p class="no-margin"><b>Step 3 :</b> Enter last days values (visit : <a target="_blank" href="https://www.worldometers.info/coronavirus/">Worldometers/Coronavirus</a>)</p>
-				<p><b>Step 4 :</b> Press "Predict D+1"</p>
+				<p class="no-margin"><b>Step 3 :</b> Enter last days values corresponding to the selected location and selected type of prediction <br>(visit : <a target="_blank" href="https://www.worldometers.info/coronavirus/">Worldometers/Coronavirus</a>)</p>
+				<p><b>Step 4 :</b> Press "Predict Tomorrow"</p>
 
 				<p style="color: grey">Created by Théo Guidoux <a href="https://twitter.com/TGuidoux">@TGuidoux</a>, available on <a href="https://github.com/zetechmoy/covid19-prediction">GitHub</a></p>
 			</div>
