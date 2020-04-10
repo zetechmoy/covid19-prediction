@@ -21,8 +21,8 @@ def main():
 	############################################################################
 	#get data and define training and testing data
 	data = get_data(data_path)
-	#scaler = MinMaxScaler(feature_range=(0, 1))
-	scaler = StandardScaler()
+	mmscaler = MinMaxScaler(feature_range=(0, 1))
+	stdscaler = StandardScaler()
 	#process data
 	context_x, duration_x, values = process_data_values(data, data_vec_size)
 
@@ -46,9 +46,10 @@ def main():
 	values_x = values[:,:,0:-1]
 	values_y = values[:,:,-1]#.reshape((1, -1))[0]
 
-	scaler.fit(np.vstack((values_y, values_x.reshape((-1, 1)))))
-	values_x = scaler.transform(values_x.reshape((-1, 1))).reshape(values_x.shape)
-	values_y = scaler.transform(values_y).reshape((1, -1))[0]
+	xs = stdscaler.fit_transform(np.vstack((values_y, values_x.reshape((-1, 1)))))
+	mmscaler.fit(xs)
+	values_x = mmscaler.transform(stdscaler.transform(values_x.reshape((-1, 1)))).reshape(values_x.shape)
+	values_y = mmscaler.transform(stdscaler.transform(values_y).reshape((1, -1)))[0]
 
 	cut_index = int(values_x.shape[0]*training_part)
 
@@ -70,7 +71,7 @@ def main():
 	#model.fit([context_x, values_x], values_y, batch_size=128, epochs=50)
 	for _ in range(0, 10):
 		#last best good res : batch_size=256, linear, loss: 0.0078
-		model.fit([values_x, context_x, duration_x], values_y, batch_size=256, epochs=100, validation_split=training_part)
+		model.fit([values_x, context_x, duration_x], values_y, batch_size=256, epochs=10, validation_split=training_part)
 		test_sample_duration_x = duration_x[0:5]
 		test_sample_context_x = context_x[0:5]
 		test_sample_x = values_x[0:5]
@@ -79,9 +80,9 @@ def main():
 
 
 		#inverse transform
-		predictions_itransformed = scaler.inverse_transform(predictions.reshape((-1, 1))).reshape(predictions.shape)
-		test_sample_y_itransformed = scaler.inverse_transform(test_sample_y.reshape((-1, 1))).reshape(test_sample_y.shape)
-		test_sample_x_itransformed = scaler.inverse_transform(test_sample_x.reshape((-1, 1))).reshape(test_sample_x.shape)
+		predictions_itransformed = stdscaler.inverse_transform(mmscaler.inverse_transform(predictions.reshape((-1, 1)))).reshape(predictions.shape)
+		test_sample_y_itransformed = stdscaler.inverse_transform(mmscaler.inverse_transform(test_sample_y.reshape((-1, 1)))).reshape(test_sample_y.shape)
+		test_sample_x_itransformed = stdscaler.inverse_transform(mmscaler.inverse_transform(test_sample_x.reshape((-1, 1)))).reshape(test_sample_x.shape)
 
 		for i in range(0, test_sample_x.shape[0]):
 			#data without inverse_transform
